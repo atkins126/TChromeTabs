@@ -23,18 +23,26 @@ unit ChromeTabsClasses;
 
 interface
 
-uses
+{$IFDEF FPC}
+  {$MODE DELPHI}
+{$ELSE}
   {$IF CompilerVersion >= 23.0}
-  System.SysUtils, System.Classes, System.Types, System.Math, System.Contnrs,
+    {$DEFINE UNIT_SCOPE_NAMES}
+  {$ENDIF}
+{$ENDIF}
+
+uses
+  {$IFDEF UNIT_SCOPE_NAMES}
+  System.SysUtils,System.Classes,System.Types,System.Math,System.Contnrs,
   System.UITypes,
-  Vcl.Graphics, Vcl.Controls, Vcl.ExtCtrls, Vcl.Forms, Vcl.GraphUtil,
-  Vcl.ImgList, Vcl.Dialogs,
+  Vcl.Graphics,Vcl.Controls,Vcl.ExtCtrls,Vcl.Forms,Vcl.GraphUtil,Vcl.ImgList,
+  Vcl.Dialogs,
   WinApi.Windows, WinApi.Messages,
   {$ELSE}
-  SysUtils, Classes, Math, Contnrs,
-  Graphics, Controls, ExtCtrls, Forms, GraphUtil, ImgList, Dialogs,
-  Windows, Messages,
-  {$IFEND}
+  SysUtils,Classes,Math,Contnrs,
+  Graphics,Controls,ExtCtrls,Forms,GraphUtil,ImgList,Dialogs,
+  Windows,Messages,
+  {$ifend}
 
   GDIPObj, GDIPAPI,
 
@@ -50,8 +58,8 @@ type
   IChromeTab = interface
     ['{B1B1F10B-3E5C-4A9E-B62F-8C322C803902}']
     function GetCaption: TCaption;
-    function GetImageIndex: {$IF CompilerVersion >= 23.0}System.UITypes.{$IFEND}TImageIndex;
-    function GetImageIndexOverlay: {$IF CompilerVersion >= 23.0}System.UITypes.{$IFEND}TImageIndex;
+    function GetImageIndex: {$IFDEF UNIT_SCOPE_NAMES}System.UITypes.{$IFEND}TImageIndex;
+    function GetImageIndexOverlay: {$IFDEF UNIT_SCOPE_NAMES}System.UITypes.{$IFEND}TImageIndex;
     function GetActive: Boolean;
     function GetPinned: Boolean;
     function GetIndex: Integer;
@@ -61,6 +69,10 @@ type
     function GetSpinnerState: TChromeTabSpinnerState;
     function GetHideCloseButton: Boolean;
     function GetData: Pointer;
+    function GetCustomImages: TCustomImageList;
+    function GetCustomImagesOverlay: TCustomImageList;
+    function GetCustomImagesSpinnerDownload: TCustomImageList;
+    function GetCustomImagesSpinnerUpload: TCustomImageList;
     procedure SetData(const Value: Pointer);
     property Data: Pointer read GetData write SetData;
   end;
@@ -108,15 +120,20 @@ type
   TChromeTab = class(TCollectionItem, IChromeTab)
   private
     // These dummy functions are required so we can implement an interface
+
+    {$IFDEF FPC}
+    function QueryInterface({$IFDEF FPC_HAS_CONSTREF}constref{$ELSE}const{$ENDIF} iid : tguid;out obj) : longint;{$IFNDEF WINDOWS}cdecl{$ELSE}stdcall{$ENDIF};
+    {$ELSE}
     function QueryInterface(const IID: TGUID; out Obj): HResult; stdcall;
+    {$ENDIF}
     function _AddRef: Integer; stdcall;
     function _Release: Integer; stdcall;
   private
     FCollection: TCollection;
     FCaption: TCaption;
     FData: Pointer;
-    FImageIndex: {$IF CompilerVersion >= 23.0}System.UITypes.{$IFEND}TImageIndex;
-    FImageIndexOverlay: {$IF CompilerVersion >= 23.0}System.UITypes.{$IFEND}TImageIndex;
+    FImageIndex: {$IFDEF UNIT_SCOPE_NAMES}System.UITypes.{$IFEND}TImageIndex;
+    FImageIndexOverlay: {$IFDEF UNIT_SCOPE_NAMES}System.UITypes.{$IFEND}TImageIndex;
     FTag: integer;
     FPinned: Boolean;
     FTabControl: TObject;
@@ -126,13 +143,17 @@ type
     FMarkedForDeletion: Boolean;
     FSpinnerState: TChromeTabSpinnerState;
     FHideCloseButton: Boolean;
+    FCustomImages: TCustomImageList;
+    FCustomImagesOverlay: TCustomImageList;
+    FCustomImagesSpinnerDownload: TCustomImageList;
+    FCustomImagesSpinnerUpload: TCustomImageList;
 
     procedure SetActive(Value: boolean);
     procedure SetCaption(Value: TCaption);
-    procedure SetImageIndex(Value: {$IF CompilerVersion >= 23.0}System.UITypes.{$IFEND}TImageIndex);
+    procedure SetImageIndex(Value: {$IFDEF UNIT_SCOPE_NAMES}System.UITypes.{$IFEND}TImageIndex);
     procedure SetTag(const Value: integer);
     procedure SetPinned(const Value: Boolean);
-    procedure SetImageIndexOverlay(const Value: {$IF CompilerVersion >= 23.0}System.UITypes.{$IFEND}TImageIndex);
+    procedure SetImageIndexOverlay(const Value: {$IFDEF UNIT_SCOPE_NAMES}System.UITypes.{$IFEND}TImageIndex);
     procedure SetVisible(const Value: Boolean);
     procedure SetModified(const Value: Boolean);
     procedure SetSpinnerState(const Value: TChromeTabSpinnerState);
@@ -142,8 +163,8 @@ type
 
     function GetDisplayCaption: String;
     function GetCaption: TCaption;
-    function GetImageIndex: {$IF CompilerVersion >= 23.0}System.UITypes.{$IFEND}TImageIndex;
-    function GetImageIndexOverlay: {$IF CompilerVersion >= 23.0}System.UITypes.{$IFEND}TImageIndex;
+    function GetImageIndex: {$IFDEF UNIT_SCOPE_NAMES}System.UITypes.{$IFEND}TImageIndex;
+    function GetImageIndexOverlay: {$IFDEF UNIT_SCOPE_NAMES}System.UITypes.{$IFEND}TImageIndex;
     function GetActive: boolean;
     function GetPinned: Boolean;
     function GetIndex: Integer;
@@ -155,6 +176,14 @@ type
     function GetSpinnerState: TChromeTabSpinnerState;
     function GetHideCloseButton: Boolean;
     function GetData: Pointer;
+    procedure SetCustomImages(const Value: TCustomImageList);
+    procedure SetCustomImagesOverlay(const Value: TCustomImageList);
+    procedure SetCustomImagesSpinnerDownload(const Value: TCustomImageList);
+    procedure SetCustomImagesSpinnerUpload(const Value: TCustomImageList);
+    function GetCustomImages: TCustomImageList;
+    function GetCustomImagesOverlay: TCustomImageList;
+    function GetCustomImagesSpinnerDownload: TCustomImageList;
+    function GetCustomImagesSpinnerUpload: TCustomImageList;
   protected
     procedure DoChanged(ChangeType: TTabChangeType = tcPropertyUpdated); virtual;
     function GetDisplayName: string; override;
@@ -175,8 +204,12 @@ type
     property Caption: TCaption read GetCaption write SetCaption;
     property Active: boolean read GetActive write SetActive;
     property Tag: integer read GetTag write SetTag;
-    property ImageIndex: {$IF CompilerVersion >= 23.0}System.UITypes.{$IFEND}TImageIndex read GetImageIndex write SetImageIndex;
-    property ImageIndexOverlay: {$IF CompilerVersion >= 23.0}System.UITypes.{$IFEND}TImageIndex read GetImageIndexOverlay write SetImageIndexOverlay;
+    property CustomImages: TCustomImageList read GetCustomImages write SetCustomImages;
+    property CustomImagesOverlay: TCustomImageList read GetCustomImagesOverlay write SetCustomImagesOverlay;
+    property CustomImagesSpinnerUpload: TCustomImageList read GetCustomImagesSpinnerUpload write SetCustomImagesSpinnerUpload;
+    property CustomImagesSpinnerDownload: TCustomImageList read GetCustomImagesSpinnerDownload write SetCustomImagesSpinnerDownload;
+    property ImageIndex: {$IFDEF UNIT_SCOPE_NAMES}System.UITypes.{$IFEND}TImageIndex read GetImageIndex write SetImageIndex;
+    property ImageIndexOverlay: {$IFDEF UNIT_SCOPE_NAMES}System.UITypes.{$IFEND}TImageIndex read GetImageIndexOverlay write SetImageIndexOverlay;
     property Pinned: Boolean read GetPinned write SetPinned;
     property Visible: Boolean read GetVisible write SetVisible;
     property Modified: Boolean read GetModified write SetModified;
@@ -1186,6 +1219,8 @@ type
     procedure Invalidate;
     function GetComponentState: TComponentState;
     function IsDragging: Boolean;
+    function ScaledPixels(pPixels: Integer): Integer;
+    function ScaledFontSize(fFontSize : Integer) : Integer;
 
     function GetLookAndFeel: TChromeTabsLookAndFeel;
     function GetOptions: TOptions;
@@ -1236,6 +1271,46 @@ begin
 
   if FTabControl <> nil then
     FTabControl.Free;
+end;
+
+procedure TChromeTab.SetCustomImages(const Value: TCustomImageList);
+begin
+  FCustomImages := Value;
+end;
+
+procedure TChromeTab.SetCustomImagesOverlay(const Value: TCustomImageList);
+begin
+  FCustomImagesOverlay := Value;
+end;
+
+procedure TChromeTab.SetCustomImagesSpinnerDownload(const Value: TCustomImageList);
+begin
+  FCustomImagesSpinnerDownload := Value;
+end;
+
+procedure TChromeTab.SetCustomImagesSpinnerUpload(const Value: TCustomImageList);
+begin
+  FCustomImagesSpinnerUpload := Value;
+end;
+
+function TChromeTab.GetCustomImages : TCustomImageList;
+begin
+  Result := FCustomImages;
+end;
+
+function TChromeTab.GetCustomImagesOverlay : TCustomImageList;
+begin
+  Result := FCustomImagesOverlay;
+end;
+
+function TChromeTab.GetCustomImagesSpinnerDownload : TCustomImageList;
+begin
+  Result := FCustomImagesSpinnerDownload;
+end;
+
+function TChromeTab.GetCustomImagesSpinnerUpload : TCustomImageList;
+begin
+  Result := FCustomImagesSpinnerUpload;
 end;
 
 procedure TChromeTab.SetPinned(const Value: Boolean);
@@ -1380,12 +1455,12 @@ begin
   Result := FHideCloseButton;
 end;
 
-function TChromeTab.GetImageIndex: {$IF CompilerVersion >= 23.0}System.UITypes.{$IFEND}TImageIndex;
+function TChromeTab.GetImageIndex: {$IFDEF UNIT_SCOPE_NAMES}System.UITypes.{$IFEND}TImageIndex;
 begin
   Result := FImageIndex;
 end;
 
-function TChromeTab.GetImageIndexOverlay: {$IF CompilerVersion >= 23.0}System.UITypes.{$IFEND}TImageIndex;
+function TChromeTab.GetImageIndexOverlay: {$IFDEF UNIT_SCOPE_NAMES}System.UITypes.{$IFEND}TImageIndex;
 begin
   Result := FImageIndexOverlay;
 end;
@@ -1482,7 +1557,11 @@ begin
   Result := (FImageIndex <> -1) or (FImageIndexOverlay <> -1);
 end;
 
+{$IFDEF FPC}
+function TChromeTab.QueryInterface({$IFDEF FPC_HAS_CONSTREF}constref{$ELSE}const{$ENDIF} iid : tguid;out obj) : longint;{$IFNDEF WINDOWS}cdecl{$ELSE}stdcall{$ENDIF};
+{$ELSE}
 function TChromeTab.QueryInterface(const IID: TGUID; out Obj): HResult;
+{$ENDIF}
 begin
   // Do nothing
   Result := 0;
@@ -1503,7 +1582,7 @@ begin
   end;
 end;
 
-procedure TChromeTab.SetImageIndex(Value: {$IF CompilerVersion >= 23.0}System.UITypes.{$IFEND}TImageIndex);
+procedure TChromeTab.SetImageIndex(Value: {$IFDEF UNIT_SCOPE_NAMES}System.UITypes.{$IFEND}TImageIndex);
 begin
   if FImageIndex <> Value then
   begin
@@ -1513,7 +1592,7 @@ begin
   end;
 end;
 
-procedure TChromeTab.SetImageIndexOverlay(const Value: {$IF CompilerVersion >= 23.0}System.UITypes.{$IFEND}TImageIndex);
+procedure TChromeTab.SetImageIndexOverlay(const Value: {$IFDEF UNIT_SCOPE_NAMES}System.UITypes.{$IFEND}TImageIndex);
 begin
   if FImageIndexOverlay <> Value then
   begin
@@ -1621,12 +1700,13 @@ var
   i: Integer;
 begin
   for i := 0 to pred(Count) do
-    if Items[i] = Value then
-    begin
-      Items[i].Active := TRUE;
-
-      Break;
-    end;
+  if (Items[i] = Value) and (Value <> nil) then
+  begin
+    Items[i].Active := TRUE;
+    Break;
+  end else
+  if (Value = nil) then
+    Items[i].Active := FALSE;
 end;
 
 procedure TChromeTabsList.SetItem(Index: Integer; Value: TChromeTab);
@@ -1691,7 +1771,7 @@ begin
   if GetChromeTabInterface <> nil then
     case Action of
       //cnDeleting: GetChromeTabInterface.Invalidate;
-      {$IF CompilerVersion >= 23.0}TCollectionNotification.{$IFEND}cnAdded: GetChromeTabInterface.DoOnChange(TChromeTab(Item), tcAdded);
+      {$IFDEF UNIT_SCOPE_NAMES}TCollectionNotification.{$IFEND}cnAdded: GetChromeTabInterface.DoOnChange(TChromeTab(Item), tcAdded);
     end;
 end;
 
